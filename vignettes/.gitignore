@@ -1,0 +1,4 @@
+*.html
+*.R
+use_BPpack_cache/
+use_BPpack_files/

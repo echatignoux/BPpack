@@ -1,0 +1,455 @@
+---
+title: |  
+    | How to Avoid Overestimating the Burden of Hypertension in Epidemiological Studies? A New Methodology to Account for Within-Person Variability of Blood Pressure
+    | <font size="4">  *Manuscript submitted for publication, 2022*  </font> 
+subtitle: A working example
+author: Edouard Chatignoux, Valérie Olié, Christophe Bonaldi, Clémence Grave, Amélie Gabet, Jacques Blacher
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  bookdown::html_document2:
+    <!-- css: style.css  -->
+    <!-- code_folding: hide -->
+    highlight: tango
+    fig_width: 9
+    fig_height: 9
+    dev: svg
+    number_sections: true
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    fig_caption: TRUE
+---
+
+
+
+```{r,eval=T,echo=F}
+
+options(dplyr.print_min = 5)
+options(dplyr.print_max = 5)
+knitr::opts_chunk$set(echo=T, fig.align="center",cache=T,
+                      message = FALSE, warnings = FALSE)
+
+## set.seed(10)
+## dt_calib<-dt_calib%>%
+##   group_by(site,dist,age)%>%
+##   mutate(N_I=rpois(lambda=N_I,n=1))%>%
+##   rowwise()%>%
+##   mutate(N_HC=rpois(lambda=N_HC,n=1))
+
+``` 
+
+# Overview#
+
+This document illustrates the application of a
+methodology to take into account within-person blood pressure (BP) variability in
+epidemiological studies to avoid bias in the estimation of
+the burden of hypertension (HT).
+
+
+R-package
+---------
+
+The material and R code used in this application are part of the 
+R-package `BPpack`, available in Github. 
+Use the package [devtools](https://github.com/hadley/devtools) to
+install the package : 
+
+```{r,echo=T,eval=F}
+
+require(devtools)
+install_github("echatignoux/BPpack")
+
+```
+
+After installation, the package can be loaded into R.
+
+```{r,echo=T}
+
+library(BPpack)
+
+```
+
+The `tidyverse`, `magrittr`, `splines` and `survey` packages are also needed 
+to run the following code. 
+
+
+
+```{r,echo=T}
+
+library(tidyverse)
+library(magrittr)
+library(splines)
+library(survey)
+
+``` 
+
+
+Data sources
+---------
+
+The application of the method is illustrated here on the NHANESIII
+data base, available at
+(https://wwwn.cdc.gov/nchs/nhanes/nhanes3/default.aspx).
+
+For the purpose of illustration, we restricted the NHANESIII data to
+patients having at least two visits and two measures of BP per
+visit. We further selected, for each patients, the first two visits
+and the last two BP measures per visit, so that the resulting data in
+`dt_nhanes` corresponds to an equilibrated design.
+
+The resulting data is stored in a long format, with one line per
+patient/visit/measure.
+
+```{r}
+dt_nhanes
+
+``` 
+
+
+Main function
+---------
+
+The main function of the `BPpack` package is the `correct_htn`
+function, which allows for estimation of the prevalence of
+hypertension.
+
+Its arguments are (see `?correct_htn`):
+
+* `form` A formula giving covariates by which HTN prevalence is
+   calculated. If `htn` is placed in the left hand side of
+   `formula`, then variation of prevalence according to the
+   covariates given in the right hand side of are estimated with a
+   `glm` (`survey::svyglm` if `surv_des` is not NULL) model with
+   quasibinomial distribution. Else, prevalence is tabulated
+   according to the covariates given in the right hand side (simple
+   tabulation or `survey::svyby` if `surv_des` is not NUL).
+*  `subpop` A boolean covariate that defines a subpopulation
+   over which to filter the calculation of prevalence. `subpop`
+   must be given in a formula form, e.g. ~subpop. 
+* `n_samp` The number of posterior sample of the correction
+   factor to be used in the estimation. Default (NULL) resumes to
+   the maximum number of available posterior samples.
+* `data_long` Data frame giving the BP measurements of the
+   population under study. Data must be given in a long format,
+   e.g. one raw per BP measure (see `dt_nhanes` format).  The data
+   frame must have the following columns: "id" Patient identifier;
+   "age" Age of the patient in years; "sex" Sex of the patient;
+   "tt_htn" Boolean with value `TRUE` if the patient is under anti-hypertensive
+   treatment; "visit" : Identifier of the visit; "BP_typ" : type of BP
+   prelevement, "dia" for diastolic, "sys" for systolic; "bp" : Value of blood pressure
+   measurement
+* `surv_des` If applicable, the survey design of the study,
+   specifyed with `svydesign` from `survey` package. 
+* `correct` Boolean set to `TRUE` (the default) to correct
+   prevalence.
+* `tresh` A data frame giving the BP thresholds that defines
+   hypertension. Default to 140 for systolic BP, 90 for diastolic.
+* `glm` Boolean set to `TRUE` (the default) to evaluate the prevalence
+of HTN according to the formula specified in  `form` with a `glm`
+model with binomial distribution (`svyglm` if a survey design is
+specified). Otherwise tabulation of the prevalence of HTN according to the covariates in formula is done. 
+
+# Estimation of the burden of hypertension in NHANESIII data #
+
+## Uncorrected estimates ##
+
+Hypertension is defined within one individual if the mean of its BP
+measurements (for diastolic or systolic BP) exceeds a threshold, or if
+the patient takes an treatment for HT. 
+
+The crude estimation of the prevalence of hypertension consists in
+counting hypertensive patients from the data. This can be done using
+the `correct_htn` function:
+
+```{r}
+correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes,
+            correct = FALSE)
+``` 
+
+The sampling design of the NHANESIII survey may be taken into account
+using the `surv_des` argument of the function:
+
+```{r}
+
+## First, define the design
+d.s <- svydesign(ids=~1,
+                 data=dt_nhanes,
+                 weights=~samp_weight)
+
+## Then, use it 
+correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes,
+            surv_des = d.s,
+            correct = FALSE)
+
+``` 
+
+It worth saying that in example above, the specification of the survey
+design was loose, as applied to data given in long format, whereas it
+should have been defined from data in a wide format instead. This
+doesn't matter actually, as the `correct_htn` function only keeps the
+specification of the survey design, and applies it to data with only
+one observation per individual.
+
+This point is confirmed bellow:
+```{r}
+
+## First, define the design
+dt_nhanes_wide<-
+  dt_nhanes%>%
+  ungroup()%>%
+  mutate(vm=paste("bp",visit,meas,sep="_"))%>%
+  select(-visit,-meas)%>%
+  spread(vm,bp)
+d.s.w <- svydesign(ids=~1,
+                 data=dt_nhanes_wide,
+                 weights=~samp_weight)
+
+## Then, use it 
+correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes,
+            surv_des = d.s.w,
+            correct = FALSE)
+
+``` 
+
+The `correct_htn` function also allows for estimations of HT
+prevalence according to covariates, for example, according to body
+mass index (variable `bmi`).
+
+Note that this estimation can be done only in the subpopulation with
+non missing value of BMI, so that we should restrict or estimates to
+this subpop. This is done using the `subpop` argument of the `correct_htn`.
+
+
+```{r,fig.height=7,fig.width=10}
+
+## Define boolen for the subpop with not missing bmi
+dt_nhanes%<>%mutate(has_bmi=!is.na(bmi))
+## Estimate the variation of HT according to bmi with a natural spline of 3 df
+bmi_htn<-correct_htn(form=htn ~ ns(bmi,df=3),
+            data_long = dt_nhanes,
+            subpop=~has_bmi,
+            surv_des = d.s,
+            correct = FALSE)
+
+## Plot the results
+bmi_htn%>%
+  mutate_at(vars(htn,low,up),~.x*100)%>%
+  ggplot(data=.)+
+  aes(bmi,htn,ymin=low,ymax=up)+
+  geom_line()+
+  geom_ribbon(fill=NA,colour="black",linetype=5)+
+  xlab("Body mass index")+ylab("HT prevalence (in %)")
+
+``` 
+
+
+## Corrected estimates ##
+
+Taking into account the within-person blood pressure (BP) variability in the estimation of
+hypertension is simply done passing the `correct` argument from the
+`correct_htn` function to `TRUE`. The number of samples from the
+posterior distribution used for the estimation is controlled by the
+`n_samp` argument. As the estimation time increases with the number of
+samples, we'll keep it low (`n_samp=100`) in this illustrative application here.
+
+
+To illustrate the consequences of neglecting within-person blood
+pressure variability in the estimates, we estimated HT prevalence 
+using the two visits from NHANESIII, or only the first or the second. 
+
+```{r,echo=F}
+
+
+
+dt_nhanes_v1<-dt_nhanes%>%filter(visit==1)
+dt_nhanes_v2<-dt_nhanes%>%filter(visit==2)
+
+htn_cor<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes,
+            surv_des = d.s,
+            n_samp = 100,
+            correct = TRUE)
+
+htn_cor_v1<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes_v1,
+            surv_des = d.s,
+            n_samp = 100,
+            correct = TRUE)
+
+htn_cor_v2<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes_v2,
+            surv_des = d.s,
+            n_samp = 100,
+            correct = TRUE)
+
+htn_uncor<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes,
+            surv_des = d.s,
+            n_samp = 1,
+            correct = FALSE)
+
+htn_uncor_v1<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes_v1,
+            surv_des = d.s,
+            n_samp = 1,
+            correct = FALSE)
+
+htn_uncor_v2<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes_v2,
+            surv_des = d.s,
+            n_samp = 1,
+            correct = FALSE)
+
+
+``` 
+
+
+
+```{r,echo=T,eval=F}
+
+dt_nhanes_v1<-dt_nhanes%>%filter(visit==1)
+dt_nhanes_v2<-dt_nhanes%>%filter(visit==2)
+
+htn_cor<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes,
+            surv_des = d.s,
+            n_samp = 100,
+            correct = TRUE)
+
+htn_cor_v1<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes_v1,
+            surv_des = d.s,
+            n_samp = 100,
+            correct = TRUE)
+
+htn_cor_v2<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes_v2,
+            surv_des = d.s,
+            n_samp = 100,
+            correct = TRUE)
+
+htn_uncor<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes,
+            surv_des = d.s,
+            n_samp = 1,
+            correct = FALSE)
+
+htn_uncor_v1<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes_v1,
+            surv_des = d.s,
+            n_samp = 1,
+            correct = FALSE)
+
+htn_uncor_v2<-correct_htn(form=htn ~ 1,
+            data_long = dt_nhanes_v2,
+            surv_des = d.s,
+            n_samp = 1,
+            correct = FALSE)
+
+
+``` 
+
+
+The results are reported in the table below:
+
+```{r, echo=F}
+library(kableExtra)
+
+compare_htn<-
+  htn_cor%>%mutate(visit="all",correct=TRUE)%>%
+  bind_rows(htn_uncor%>%mutate(visit="all",correct=FALSE))%>%
+  bind_rows(htn_cor_v1%>%mutate(visit="v1",correct=TRUE))%>%
+  bind_rows(htn_uncor_v1%>%mutate(visit="v1",correct=FALSE))%>%
+  bind_rows(htn_cor_v2%>%mutate(visit="v2",correct=TRUE))%>%
+  bind_rows(htn_uncor_v2%>%mutate(visit="v2",correct=FALSE))%>%
+  select(visit,correct,everything())
+
+compare_htn%>%
+  mutate_at(vars(htn,low,up,se),~format(round(.x*100,2),nsmall=2))%>%
+  mutate(htn=paste0(htn," [",low," - ",up,"]"))%>%
+  select(-low,-up,-se)%>%
+  mutate(correct=factor(correct,labels=c("Un-corrected HT","Corrected HT")))%>%
+  mutate(visit=fct_recode(factor(visit),All="all","Visit 1"="v1","Visit 2"="v2"))%>%
+  spread(correct,htn)%>%
+  rename(Visit=visit)%>%
+  kable(caption="Corrected and un-corrected estimates of HT according to the visits used",escape=FALSE,booktabs = TRUE) %>%
+  kable_styling("hover", full_width = F)
+
+  
+``` 
+
+The table shows the importance of accounting for BP variability when
+estimating HT prevalence. If no correction is performed, HTN estimated
+with visit 1 or visit 2 data only are larger than HTN estimated with
+the two visits. This latter however also exhibits some bias, corrected
+HTN (i.e. HT prevalence estimated with BP collected over an infinite
+number visits and measures in the population) being 9% lower than
+uncorrected HTN. As expected, the overestimation of HTN is higher
+(~15%) when only one visit is used for the estimation.
+
+Some differences however still remains between visit 1 and visit 2
+estimates, probably revealing differences in conditions under which BP was
+measured in the two visits, including a possible white coat
+effect. Without additional information on the reasons for those
+differences however, there is no indication about which visit to
+favor and no obvious additional correction to apply. 
+
+
+```{r,eval=F, echo=F}
+
+compare_htn%>%
+  select(htn,visit,correct)%>%
+  spread(correct,htn)%>%
+  mutate(dif = 100*(`TRUE`-`FALSE`)/`FALSE`)
+
+``` 
+
+
+Similarly, `correct_htn` can be used to estimating the level of
+corrected HT prevalence at different BMI levels with the same syntax
+as in the previous section, but specifying `correct = TRUE` in the
+arguments.
+
+The corrected curve (in blue) is superimposed with the previous uncorrected
+curve (in red).
+
+
+```{r}
+bmi_htn_correct<-correct_htn(form=htn ~ ns(bmi,df=3),
+            data_long = dt_nhanes,
+            subpop=~has_bmi,
+            surv_des = d.s,
+            n_samp = 100,
+            correct = TRUE)
+```
+
+
+```{r,fig.height=7,fig.width=10, warnings = F, messages = F, echo=F}
+## Plot the results
+options(warn=-1)
+bmi_htn%>%
+    mutate(Corrected=FALSE,
+           low=NA,up=NA)%>%
+    bind_rows(bmi_htn_correct%>%
+              mutate(Corrected=TRUE))%>%
+    mutate_at(vars(htn,low,up),~.x*100)%>%
+    ggplot(data=.)+
+    aes(bmi,htn,ymin=low,ymax=up,colour=Corrected)+
+    geom_line()+
+    geom_line(aes(bmi,up),linetype=5)+
+    geom_line(aes(bmi,low),linetype=5)+
+    xlab("Body mass index")+ylab("HT prevalence (in %)")+
+    theme(legend.position="bottom")
+
+
+``` 
+
+
+<!-- Local Variables: -->
+<!-- ispell-check-comments: exclusive -->
+<!-- ispell-local-dictionary: "english" -->
+<!-- End: -->

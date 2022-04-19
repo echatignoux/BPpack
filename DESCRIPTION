@@ -25,3 +25,7 @@ Imports:
     formula.tools
 Depends: 
     R (>= 4.0.0)
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

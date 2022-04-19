@@ -28,8 +28,8 @@ The package needs R version 4.0.0 or higher.
 Illustration of use
 -------------------
 
-The use of `BPpack` package is illustrated using NHANESIII data in the following
-	application : <https://echatignoux.github.io/BPpack/working_examples.html>.
+Usage of `BPpack` package is illustrated using NHANESIII data in the following
+	vignette : <https://echatignoux.github.io/BPpack/use_BPpack.html>.
 
 
 

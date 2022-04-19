@@ -14,7 +14,7 @@
 devtools::create()
 
 ##'Vignette
-usethis::use_vignette("my-vignette")
+usethis::use_vignette("use_BPpack")
 
 ##'Liste des packages dont on a besoin
 ##' (use_package ajoute le paquet à DOCUMENT)
