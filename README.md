@@ -29,7 +29,7 @@ Illustration of use
 -------------------
 
 Usage of `BPpack` package is illustrated using NHANESIII data in the following
-	vignette : <https://echatignoux.github.io/BPpack/use_BPpack.html>.
+	vignette : <https://echatignoux.github.io/use_BPpack.html>.
 
 
 
