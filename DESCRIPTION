@@ -1,0 +1,27 @@
+Package: BPpack
+Title: Correct blood pressure in epidemilogoical studies for visit to visit and within vist measurment error
+Version: 0.1
+Authors@R: 
+    person(given = "Edouard",
+           family = "Chatignoux",
+           role = c("aut", "cre"),
+           email = "edouard.chatignoux@gmail.com",
+           comment = c(ORCID = "0000-0001-9988-1108"))
+Description: This package uses correction factor by age and sex calculated from NHANES III data to correct blood pressure for visit to visit and within vist measurment error.  
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Imports: 
+    dplyr,
+    tidyr,
+    purrr,
+    magrittr,
+    rlang,
+    progress,
+    splines,
+    survey,
+    formula.tools
+Depends: 
+    R (>= 4.0.0)

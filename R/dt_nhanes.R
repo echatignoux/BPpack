@@ -1,0 +1,25 @@
+##' Nhanes III data in long format
+##'
+##' Data from the NHANES-III study used to estimate compomnets of BP variability
+##'
+##'
+##' \itemize{
+##' \item \code{id} : Patient's identifying number
+##' \item \code{age} : Patient's age in years
+##' \item \code{sex} : Patient's sex (1 for men, 2 for women)
+##' \item \code{BP_typ} : Type of blood pressure measure : diastolic ("dia") or systolic ("sys")
+##' \item \code{visit} : Number of the visit (restricted to 1-2)
+##' \item \code{meas} : Number of the measure during the visit (only the last two measure are kept in case of more than 2 measurements)
+##' \item \code{bp} : BP measurement 
+##' \item \code{tt_htn} : Boolean indicating if the patient takes a treatment for hypertention 
+##' \item \code{bmi} : Body mass index of the patient
+##' \item \code{diab} : Boolean indicating wether the patient has diabet
+##' \item \code{samp_weight} : Sampling weights of the survey
+##' \item \code{htn} : Boolean indicating wether the patient is hypertensive (i.e. `tt_htn` to true, or mean BP measurement above the threshold)
+##' }
+##' @docType data
+##' @keywords datasets
+##' @name  dt_nhanes 
+##' @usage data( dt_nhanes )
+##' @format A data frame with  121280  rows and  13  variables
+"dt_nhanes"
