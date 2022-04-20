@@ -392,11 +392,12 @@ uncorrected HTN. As expected, the overestimation of HTN is higher
 (~15%) when only one visit is used for the estimation.
 
 Some differences however still remains between visit 1 and visit 2
-estimates, probably revealing differences in conditions under which BP was
-measured in the two visits, including a possible white coat
-effect. Without additional information on the reasons for those
-differences however, there is no indication about which visit to
-favor and no obvious additional correction to apply. 
+estimates, probably due to lower BP reactivity to physicians at the
+second visit (lower white coat effect) and to differences in
+conditions under which BP was measured in the two visits. Without
+additional information on the reasons for those differences however,
+there is no indication about which visit to favor and no obvious
+additional correction to apply. 
 
 
 ```{r,eval=F, echo=F}

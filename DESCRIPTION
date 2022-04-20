@@ -1,5 +1,5 @@
 Package: BPpack
-Title: Correct blood pressure in epidemilogoical studies for visit to visit and within vist measurment error
+Title: Estimation of hypertention prevalence in epidemilogoical studies with correction of within-person variability in blood pressure measures
 Version: 0.1
 Authors@R: 
     person(given = "Edouard",
@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "edouard.chatignoux@gmail.com",
            comment = c(ORCID = "0000-0001-9988-1108"))
-Description: This package uses correction factor by age and sex calculated from NHANES III data to correct blood pressure for visit to visit and within vist measurment error.  
+Description: This package uses correction factor by age and sex estimated from NHANES III data to correct blood pressure measurments for visit to visit and within vist measurment error.  This correction alleviates bias in the estimation of the prevalence of hypertention in epidemiological studies.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
