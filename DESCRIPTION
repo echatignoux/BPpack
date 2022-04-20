@@ -1,5 +1,5 @@
 Package: BPpack
-Title: Estimation of hypertention prevalence in epidemiological studies with correction of within-person variability in blood pressure measures
+Title: Estimation of the prevalence of hypertention form blood pressure data allowing correction for within-person variability
 Version: 0.1
 Authors@R: 
     person(given = "Edouard",
