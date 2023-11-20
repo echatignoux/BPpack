@@ -130,8 +130,9 @@ correct_htn <- function (form = htn ~ 1,
                   surv_des <- subset(surv_des, sub)
                 }
                 if (!glm)
-                  tab <- survey::svyby(~all.vars(form)[1], form, design = surv_des,
-                    svymean)
+                  tab <- survey::svyby(paste0("~",all.vars(form)[1]) %>% as.formula,
+                                       paste0("~",all.vars(form)[-1]) %>% as.formula, 
+                                       design = surv_des, svymean)
                 else {
                   glm_fit <- survey::svyglm(form, design = surv_des,
                     family = "quasibinomial")
