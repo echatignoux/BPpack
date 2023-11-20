@@ -75,7 +75,7 @@ correct_htn <- function (form = htn ~ 1,
         n_samp <- max(dt_post_samp$samp)
     if (!is.null(surv_des)) {
         surv_var <- c(all.vars(surv_des$call$ids), all.vars(surv_des$call$variables),
-            all.vars(surv_des$call$probs), all.vars(surv_des$call$weights))
+            all.vars(surv_des$call$probs), all.vars(surv_des$call$weights),all.vars(surv_des$call$strata))
         data_long$w <- data_long[, all.vars(surv_des$call$weights)] %>%
             unlist
     }
